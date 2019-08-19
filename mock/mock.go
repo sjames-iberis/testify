@@ -3,6 +3,7 @@ package mock
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -684,7 +685,11 @@ func (args Arguments) Diff(objects []interface{}) (string, int) {
 			actualFmt = "(Missing)"
 		} else {
 			actual = objects[i]
-			actualFmt = fmt.Sprintf("(%[1]T=%[1]v)", actual)
+			if isRaceDetectionEnabled {
+				actualFmt = "raceDetectionAvoidingEvaluationOfActualArgument"
+			} else {
+				actualFmt = fmt.Sprintf("(%[1]T=%[1]v)", actual)
+			}
 		}
 
 		if len(args) <= i {
@@ -891,4 +896,9 @@ var spewConfig = spew.ConfigState{
 
 type tHelper interface {
 	Helper()
+}
+
+var isRaceDetectionEnabled bool
+func init() {
+	isRaceDetectionEnabled = os.Getenv("RACE_DETECTION") != ""
 }
